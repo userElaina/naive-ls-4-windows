@@ -1,2 +1,2 @@
 # naive-ls-4-windows
-ls
+看代码就知道怎么用
