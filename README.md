@@ -3,4 +3,6 @@
 
 仅实现了 `ls` 本身,就叫 `ll` 好了.
 
+看代码来知道如何使用其它功能.
+
 ![image](https://user-images.githubusercontent.com/80948381/121913966-6cc1dc80-cd64-11eb-9638-622711a6f76a.png)
