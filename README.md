@@ -5,4 +5,4 @@
 
 看代码来知道如何使用其它功能.
 
-![image](https://user-images.githubusercontent.com/80948381/121913966-6cc1dc80-cd64-11eb-9638-622711a6f76a.png)
+![image](https://user-images.githubusercontent.com/80948381/122682607-0d187500-d22d-11eb-8122-7de31acda0f6.png)
