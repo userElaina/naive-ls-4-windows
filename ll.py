@@ -50,30 +50,19 @@ for i in colors:
 	color_name[i[:2]]=i
 
 
+def get_ext(s:str)->str:
+	_base=os.path.basename(s)
+	return _base.rsplit('.',1)[-1].lower() if '.' in _base else ''
+
 class Ls:
 	def __init__(
 		self,
 		pth:str='./',
 		l:list=list(),
 	):
-		self.__pth=os.path.abspath(pth)
-
-		self.__d=['.','..',]
-		self.__f=list()
-		self.__ext=list()
-		for i in os.listdir(self.__pth):
-			i=os.path.join(self.__pth,i)
-			if os.path.isdir(i):
-				self.__d.append(i)
-			elif os.path.isfile(i):
-				self.__f.append(i)
-				self.__ext.append(
-					i.rsplit('.',1)[-1].lower() if '.' in os.path.basename(i) else ''
-				)
-		self.__len=(len(self.__d)-2,len(self.__f))
-		self.__ans=0
-		self.__col=['default']*self.__len[1]
-
+		self.__pth=os.path.abspath('./')
+		self.cd(pth)
+		self.__col=dict()
 		self.__cols={'red','green','yellow','blue','purple','cyan'}
 
 		for i in l:
@@ -88,39 +77,70 @@ class Ls:
 			self.__cols.discard(ans)
 		return ans
 
-	def paint(self,x:str,y:str=None):
-		if y in color_name:
-			y=color_name[y]
-		else:
-			y=self.__get_col()
-		l_ext=exts[x]
-		for i in range(self.__len[1]):
-			if self.__ext[i] in l_ext:
-				self.__col[i]=y
-		self.__ans=len([None for i in self.__col if i!='default'])
-		
-	
-	def to_dict(self)->dict:
-		return {'dir':self.__d,'file':self.__f,}
+	def cd(self,pth:str):
+		_ans=os.path.abspath(os.path.join(self.__pth,pth))
+		self.__pth=_ans if os.path.isdir(_ans) else os.path.dirname(_ans)
+		self.__d=['.','..',]
+		self.__f=list()
+		self.__ext=list()
+		for i in os.listdir(self.__pth):
+			_full=os.path.join(self.__pth,i)
+			if os.path.isdir(_full):
+				self.__d.append(i)
+			elif os.path.isfile(_full):
+				self.__f.append(i)
 
-	def show(self):
-		print('\ndir('+str(self.__len[0])+'):\n')
-		for i in self.__d:
-			print(os.path.basename(i)+'/')
-		print('\033[0m')
-		print('file('+str(self.__ans)+'/'+str(self.__len[1])+'):\n')
-		for i in range(self.__len[1]):
-			print(colors[self.__col[i]]+os.path.basename(self.__f[i])+'\n'+colors['default'],end='')
+	def paint(self,x:str,y:str=None)->bool:
+		if x not in exts:
+			return False
+		y=color_name[y] if y in color_name else self.__get_col()
+		_d={i:y for i in exts[x]}
+		self.__col.update(_d)
+		return True
+
+	def get_pth(self)->str:
+		return self.__pth
+
+	def get_col(self)->list:
+		return [self.__col.get(get_ext(i),'default') for i in self.__f]
+
+	def get_ans(self)->list:
+		return [i for i in self.__f if self.__col.get(get_ext(i),'default')!='default']
+
+	def get_info(self)->dict:
+		_col=self.get_col()
+		_ans=self.get_ans()
+		_d={
+			'pth':self.__pth,
+			'dir':self.__d,
+			'file':self.__f,
+			'ans':_ans,
+			'dir_full':[os.path.join(self.__pth,i) for i in self.__d],
+			'file_full':[os.path.join(self.__pth,i) for i in self.__f],
+			'ans_full':[os.path.join(self.__pth,i) for i in _ans],
+			'color':_col,
+			'len_dir':len(self.__d)-2,
+			'len_file':len(self.__f),
+			'len_ans':len(_ans),
+		}
+		return _d
+
+	def show(self,fullpath:bool=False):
+		_d=self.get_info()
+		_dir=_d['dir_full' if fullpath else 'dir']
+		_file=_d['file_full' if fullpath else 'file']
+
 		print()
+		print(os.path.join(_d['pth'],''))
+		print()
+		print('dir('+str(_d['len_dir'])+'):')
+		for i in _dir:
+			print(os.path.join(i,''))
+		print(colors['default'])
 
-	def fullshow(self):
-		print('\ndir('+str(self.__len[0])+'):\n')
-		for i in self.__d:
-			print(i+'/')
-		print('\033[0m')
-		print('file('+str(self.__ans)+'/'+str(self.__len[1])+'):\n')
-		for i in range(self.__len[1]):
-			print(colors[self.__col[i]]+self.__f[i]+'\n'+colors['default'],end='')
+		print('file('+str(_d['len_ans'])+'/'+str(_d['len_file'])+'):')
+		for i in range(_d['len_file']):
+			print(colors[_d['color'][i]]+_file[i]+'\n'+colors['default'],end='')
 		print()
 
 cd='./'
@@ -128,7 +148,9 @@ l=sys.argv[1:]
 if len(l):
 	if os.path.isdir(l[0]):
 		cd=l.pop(0)
+
 mian=Ls(cd)
+full=False
 
 for i in l:
 	x=i
@@ -138,4 +160,7 @@ for i in l:
 			x=i.split(j)[0]
 			y=i.split(j)[-1]
 	mian.paint(x,y)
-mian.show()
+	if i=='full':
+		full=True
+
+mian.show(fullpath=full)
