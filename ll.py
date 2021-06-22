@@ -1,6 +1,7 @@
 import os
 import sys
 import random
+from copy import deepcopy as dcp
 
 exts={
 	'':[''],
@@ -89,6 +90,7 @@ class Ls:
 				self.__d.append(i)
 			elif os.path.isfile(_full):
 				self.__f.append(i)
+		self.__up_flg=True
 
 	def paint(self,x:str,y:str=None)->bool:
 		if x not in exts:
@@ -96,21 +98,18 @@ class Ls:
 		y=color_name[y] if y in color_name else self.__get_col()
 		_d={i:y for i in exts[x]}
 		self.__col.update(_d)
+		self.__up_flg=True
 		return True
 
 	def get_pth(self)->str:
 		return self.__pth
 
-	def get_col(self)->list:
-		return [self.__col.get(get_ext(i),'default') for i in self.__f]
-
-	def get_ans(self)->list:
-		return [i for i in self.__f if self.__col.get(get_ext(i),'default')!='default']
-
-	def get_info(self)->dict:
-		_col=self.get_col()
-		_ans=self.get_ans()
-		_d={
+	def up(self):
+		if not self.__up_flg:
+			return dcp(self.__d)
+		_col=[self.__col.get(get_ext(i),'default') for i in self.__f]
+		_ans=[i for i in self.__f if self.__col.get(get_ext(i),'default')!='default']
+		self.__d={
 			'pth':self.__pth,
 			'dir':self.__d,
 			'file':self.__f,
@@ -118,30 +117,62 @@ class Ls:
 			'dir_full':[os.path.join(self.__pth,i) for i in self.__d],
 			'file_full':[os.path.join(self.__pth,i) for i in self.__f],
 			'ans_full':[os.path.join(self.__pth,i) for i in _ans],
-			'color':_col,
+			'file_color':_col,
+			'ans_color':[i for i in _col if i!='default'],
 			'len_dir':len(self.__d)-2,
 			'len_file':len(self.__f),
 			'len_ans':len(_ans),
 		}
-		return _d
+		self.__up_flg=False
+		return dcp(self.__d)
+	
+	def get_clip(self,l:int,r:int=None,k:str='dir')->list:
+		_d=self.up()
+		if k not in {
+			'dir','file','ans','dir_full','file_full','ans_full'
+		}:
+			return list()
+		if not r:
+			r=l+1
+		mxn=_d['len_'+k.split('_')[0]]
+		l%=mxn
+		r%=mxn
+		if l>r:
+			l,r=r,l
+		return _d[k][l:r]
+	
+	def showans(self,name:str='file'):
+		_d=self.up()
+		_s=lambda x:str(x)+(' '*(3-len(str(x))))
+		print(colors['default'])
+		print(name+'('+str(_d['len_ans'])+'/'+str(_d['len_file'])+'):')
+		for i in range(_d['len_ans']):
+			print(_s(i)+' '+colors[_d['ans_color'][i]]+_d['ans'][i]+'\n'+colors['default'],end='')
+		print()
 
-	def show(self,fullpath:bool=False):
-		_d=self.get_info()
+	def show(self,fullpath:bool=False,no:bool=False,_d:dict=None):
+		_d=self.up()
 		_dir=_d['dir_full' if fullpath else 'dir']
 		_file=_d['file_full' if fullpath else 'file']
+		_s=lambda x:str(x)+(' '*(3-len(str(x))))
 
 		print()
 		print(os.path.join(_d['pth'],''))
 		print()
 		print('dir('+str(_d['len_dir'])+'):')
-		for i in _dir:
-			print(os.path.join(i,''))
+		for i in range(_d['len_dir']):
+			if no:
+				print(_s(i),end=' ')
+			print(os.path.join(_dir[i],''))
 		print(colors['default'])
 
 		print('file('+str(_d['len_ans'])+'/'+str(_d['len_file'])+'):')
 		for i in range(_d['len_file']):
-			print(colors[_d['color'][i]]+_file[i]+'\n'+colors['default'],end='')
+			if no:
+				print(_s(i),end=' ')
+			print(colors[_d['file_color'][i]]+_file[i]+'\n'+colors['default'],end='')
 		print()
+
 
 cd='./'
 l=sys.argv[1:]
@@ -151,6 +182,7 @@ if len(l):
 
 mian=Ls(cd)
 full=False
+ans=False
 
 for i in l:
 	x=i
@@ -162,5 +194,7 @@ for i in l:
 	mian.paint(x,y)
 	if i=='full':
 		full=True
+	if i=='ans':
+		ans=True
 
-mian.show(fullpath=full)
+mian.showans() if ans else mian.show(fullpath=full) 
