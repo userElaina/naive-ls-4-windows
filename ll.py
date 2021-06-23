@@ -1,7 +1,8 @@
 import os
 import sys
+import copy
 import random
-from copy import deepcopy as dcp
+
 
 exts={
 	'':[''],
@@ -36,7 +37,6 @@ colors={
 	'purple':'\033[35m',
 	'cyan':'\033[36m',
 }
-
 color_name={
 	'dft':'default',
 	'rd':'red',
@@ -44,12 +44,10 @@ color_name={
 	'pp':'purple',
 	'ppl':'purple'
 }
-
 for i in colors:
 	color_name[i]=i
 	color_name[i[0]]=i
 	color_name[i[:2]]=i
-
 
 def get_ext(s:str)->str:
 	_base=os.path.basename(s)
@@ -81,7 +79,7 @@ class Ls:
 
 	def cd(self,pth:str):
 		if isinstance(pth,int):
-			pth=self.get_clip(pth)
+			pth=self.get_clip(pth+2)
 		_ans=os.path.abspath(os.path.join(self.__pth,pth))
 		self.__pth=_ans if os.path.isdir(_ans) else os.path.dirname(_ans)
 		self.__d=['.','..',]
@@ -109,7 +107,7 @@ class Ls:
 
 	def up(self)->dict:
 		if not self.__up_flg:
-			return dcp(self.__d)
+			return copy.deepcopy(self.__d)
 		_col=[self.__col.get(get_ext(i),'default') for i in self.__f]
 		_ans=[i for i in self.__f if self.__col.get(get_ext(i),'default')!='default']
 		self.__d={
@@ -127,7 +125,7 @@ class Ls:
 			'len_ans':len(_ans),
 		}
 		self.__up_flg=False
-		return dcp(self.__d)
+		return copy.deepcopy(self.__d)
 
 	def get_clip(self,l:int,r:int=None,k:str='dir')->list:
 		_d=self.up()
