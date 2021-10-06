@@ -1,7 +1,7 @@
 import os
 import sys
 
-from userelaina.cls import Ls
+from userelaina.pthc import Ls
 
 cd='./'
 l=sys.argv[1:]
@@ -10,20 +10,23 @@ if len(l):
 		cd=l.pop(0)
 
 mian=Ls(cd)
+
 full=False
-no=False
+num=False
 
 for i in l:
+	if i.startswith('-'):
+		if 'full' in i:
+			full=True
+		if 'num' in i:
+			num=True
+		continue
 	x=i
 	y=None
-	for j in '=.-_:':
+	for j in ':=':
 		if j in i:
 			x=i.split(j)[0]
 			y=i.split(j)[-1]
-	mian.paint(x,y)
-	if i=='full':
-		full=True
-	if i=='no':
-		no=True
+	mian.setcolor(x,y)
 
-mian.show(fullpath=full,no=no) 
+mian.show(fullpath=full,num=num)
